@@ -1,0 +1,19 @@
+#!/bin/sh
+
+## Returns non-zero exit status value if any of the given files is not ELF.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 FILE..."
+	exit 0
+fi
+
+BAD=0
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	readelf -A "$FILE" >/dev/null 2>&1 || BAD=$((BAD | 1))
+done
+
+exit $BAD

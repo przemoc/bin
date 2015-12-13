@@ -1,0 +1,16 @@
+#!/bin/sh
+
+## Show earliest and latest entry for given day.
+## Author: Przemyslaw Pawelczyk
+
+LOGFILE="$HOME/.screenlock"
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 DATE..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	grep $1 "$LOGFILE" | sed '$!{1!d}'
+	shift
+done

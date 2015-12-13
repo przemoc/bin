@@ -1,0 +1,21 @@
+#!/bin/sh
+
+## `rm -rf` preserving directories modification dates.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 FILE..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	DIR="$(dirname "$FILE")"
+	DATE="$(stat -c '%y' "$DIR" 2>/dev/null)"
+	[ -z "$DATE" ] && continue
+	rm -rf "$FILE"
+	touch -d "$DATE" "$DIR"
+done
+
+exit 0

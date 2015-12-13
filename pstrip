@@ -1,0 +1,24 @@
+#!/bin/sh
+
+## Strip file, but preserve its modification date.
+## (eu-strip's -p option seems unreliable for that)
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 FILE..."
+	exit 0
+fi
+
+# comment below line if you don't want to use elfutils's strip
+STRIP_PREFIX=eu-
+[ -n "$CROSS_COMPILE" ] && STRIP_PREFIX=$CROSS_COMPILE
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	[ -h "$FILE" ] && FILE="$(readlink "$FILE")"
+	[ -z "$FILE" ] && continue
+	DATE="$(stat -c '%y' "$FILE")"
+	${STRIP_PREFIX}strip "$FILE"
+	touch -d "$DATE" "$FILE"
+done

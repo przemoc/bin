@@ -1,0 +1,19 @@
+#!/bin/sh
+
+## Convert output of `tcpdump -XX` into raw packets in PCAP format.
+## Author: Przemyslaw Pawelczyk
+
+if [ "$1" = "-h" ]; then
+	echo "usage: $0 [TCPDUMP_XX_FILE] [PCAP_FILE]"
+	exit 0
+fi
+
+[ "$1" = "--" ] && shift
+
+cat -- "${1:--}" \
+	| sed \
+	  -e  '/^[0-9]/{s, .*,,;h}' \
+	  -e  '/^\t0x/!d;s,,0,;s,: ,,' \
+	  -e  's,\<\([0-9a-f]\{2\}\)\([0-9a-f]\{2\}\)\>,\1 \2,g' \
+	  -e  '/^00000 /{x;p;x}' \
+	| text2pcap -t %H:%M:%S. -- - "${2:--}"

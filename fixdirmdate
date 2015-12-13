@@ -1,0 +1,27 @@
+#!/bin/sh
+
+## Fix directory modification date.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 DIR..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	DIR="$1"
+	shift
+	(
+		cd "$DIR"
+		find -L . -mindepth 1 -maxdepth 1 -type d \
+		     -exec "$0" {} +
+	)
+	DATE=$(find -L "$DIR" -mindepth 1 -maxdepth 1 \
+	            -exec stat -c '%y' {} + \
+	            | sort -r | sed 1q)
+	[ -z "$DATE" ] && continue
+	touch -d "$DATE" "$DIR"
+	[ -h "$DIR" ] && touch -h -d "$DATE" "$DIR"
+done
+
+exit 0

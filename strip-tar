@@ -1,0 +1,32 @@
+#!/bin/sh
+
+## Strip ELF files and remove *.a and *.la files from tar.
+## Resulting tar is put in $TMPDIR if set or /tmp.
+## Author: Przemyslaw Pawelczyk
+
+[ -z "$FAKEROOTKEY" ] && exec fakeroot "$0" "$@"
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 TAR..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	TAR="$1"
+	shift
+	[ "$TAR" = "${TAR#/}" ] && TAR="$PWD/$TAR"
+	[ -r "$TAR" ] || continue
+	TMP="$(mktemp -d)"
+	( cd "$TMP" \
+		&& tar -xf "$TAR" \
+		&& find . -name '*.a' -exec rm {} + \
+		&& find . -name '*.la' -exec rm {} + \
+		&& find . -type f -exec iself {} \; -print -exec pstrip {} + \
+		&& fixdirmdate . \
+		&& rm -f ../"${TAR##*/}" \
+		&& tar --numeric-owner -aiS -cf ../"${TAR##*/}" --exclude=. --exclude=.. .* * \
+		&& touch -r . ../"${TAR##*/}" \
+	)
+	echo "${TMPDIR:-/tmp}/${TAR##*/}"
+	rm -rf "$TMP"
+done

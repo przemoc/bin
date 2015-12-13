@@ -1,0 +1,10 @@
+#/bin/sh
+
+## Lock screen using i3lock and log it.
+## Author: Przemyslaw Pawelczyk
+
+LOGFILE="$HOME/.screenlock"
+
+date +"%FT%T%z L" >>"$LOGFILE"
+i3lock -c 000000 -n -p win ${LOCKER_IMAGE:+-i} "$LOCKER_IMAGE" -u
+date +"%FT%T%z U" >>"$LOGFILE"

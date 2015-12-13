@@ -1,0 +1,6 @@
+#!/bin/sh
+
+## Run Far Manager.
+## Author: Przemyslaw Pawelczyk
+
+exec wine wineconsole 'C:\Program Files\Far Manager\Far.exe'

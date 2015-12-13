@@ -1,0 +1,109 @@
+#!/bin/sh
+
+## Simple SRPM generator from given .spec and directories.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 [-s] SPEC [DIR]..."
+	echo
+	echo "Generates .src.rpm using given .spec and files from given directories."
+	echo "Dot files and dot dirs in the root of given directories are not included."
+	echo
+	echo "If -s is present, then all .spec files beside given SPEC are ignored."
+	echo
+	echo "If DIR is not specified, then current working directory is used."
+	exit 0
+fi
+
+RPMRC="$(rpm --showrc 2>/dev/null)"
+
+if [ -z "$RPMRC" ]; then
+	echo "No rpm utility or not configured properly!" >&2
+	exit 1
+fi
+
+# Set _topdir and _sourcedir vars appropriately
+eval $(\
+	 echo "$RPMRC" \
+		| sed -r '/ _(source|top)dir/!d;s/^[^ ]+ //;s/\t+/="/;s/%/$/g;s/getenv://;s/$/"/' \
+		| sort -r
+)
+
+SOURCEDIR="$(readlink "$_sourcedir" || echo "$_sourcedir")"
+
+if [ -z "$SOURCEDIR" ]; then
+	echo "_sourcedir is not defined!" >&2
+	exit 1
+fi
+
+if [ -e "$SOURCEDIR" -a ! -d "$SOURCEDIR" ]; then
+	echo "$SOURCEDIR is not a directory!" >&2
+	exit 1
+fi
+
+SOURCEDIR="$SOURCEDIR/"
+
+# Make sure that $_sourcedir directory exists
+mkdir -p "$SOURCEDIR" || exit 1
+
+SAVE_SINGLE_SPEC=0
+if [ "$1" = "-s" ]; then
+	SAVE_SINGLE_SPEC=1
+	shift
+fi
+
+SPEC=$1
+shift
+
+if [ "${SPEC%.spec}" = "$SPEC" ]; then
+	echo "SPEC file must end with .spec extension!" >&2
+	exit 1
+fi
+
+if ! [ -r "$SPEC" ]; then
+	echo "$SPEC does not exist or is not readable!" >&2
+	exit 1
+fi
+
+DIST="${RPM_DIST:+--define=dist .$RPM_DIST}"
+
+rpmsq() {
+	rpmspec -P "$SPEC" -q --qf "$1\n" ${DIST:+"$DIST"}
+}
+
+PKGNAME="$(rpmsq "%{name}" | sed 1q)"
+VERSION="$(rpmsq "%{version}" | sed 1q)"
+RELEASE="$(rpmsq "%{release}" | sed 1q)"
+PKGSDIR="${SOURCEDIR}$PKGNAME-$VERSION/"
+
+rm -rf "$PKGSDIR"
+mkdir -p "$PKGSDIR"
+
+[ $# -eq 0 ] && set -- .
+
+while [ $# -gt 0 ]; do
+	if ! [ -d "$1" ]; then
+		echo "$1 does not exist or is not a directory!" >&2
+		exit 1
+	fi
+	cp -at "$PKGSDIR" "${1%/}"/*
+	shift
+done
+
+[ $SAVE_SINGLE_SPEC -gt 0 ] && find "$PKGSDIR" -iname '*.spec' -exec rm -f {} +
+
+cp -at "$PKGSDIR" "$SPEC"
+
+if [ $(cd "$PKGSDIR" && find . -iname '*.spec' | wc -l) -gt 1 ]; then
+	echo "You can have only one SPEC file!" >&2
+	exit 1
+fi
+
+SRPM=$( \
+	cd "$SOURCEDIR" \
+	&& tar -czf "$PKGNAME-$VERSION.tar.gz" "$PKGNAME-$VERSION" \
+	&& rpmbuild -ts "$PKGNAME-$VERSION.tar.gz" ${DIST:+"$DIST"} | sed 's/^[^ ]* *//' \
+	&& rm -rf "$PKGNAME-$VERSION/" \
+)
+
+echo "$SRPM"

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+## Reset USB2 ports.
+## Author: Przemyslaw Pawelczyk
+
+DRIVER_PREFIX=ehci
+DRIVERSPATH=/sys/bus/pci/drivers
+
+for SYSDEVPATH in $(ls -1d $DRIVERSPATH/$DRIVER_PREFIX* 2>/dev/null); do
+	for DEV in $(ls -1d $SYSDEVPATH/*:* 2>/dev/null); do
+		echo "Unbind $DEV"
+		echo "${DEV##*/}" | sudo tee $SYSDEVPATH/unbind >/dev/null
+		echo "Rebind $DEV"
+		echo "${DEV##*/}" | sudo tee $SYSDEVPATH/bind >/dev/null
+	done
+done
