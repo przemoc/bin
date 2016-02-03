@@ -44,7 +44,7 @@ fi
 SOURCEDIR="$SOURCEDIR/"
 
 # Make sure that $_sourcedir directory exists
-mkdir -p "$SOURCEDIR" || exit 1
+mkdir -p -- "$SOURCEDIR" || exit 1
 
 SAVE_SINGLE_SPEC=0
 if [ "$1" = "-s" ]; then
@@ -76,8 +76,8 @@ VERSION="$(rpmsq "%{version}" | sed 1q)"
 RELEASE="$(rpmsq "%{release}" | sed 1q)"
 PKGSDIR="${SOURCEDIR}$PKGNAME-$VERSION/"
 
-rm -rf "$PKGSDIR"
-mkdir -p "$PKGSDIR"
+rm -rf -- "$PKGSDIR"
+mkdir -p -- "$PKGSDIR"
 
 [ $# -eq 0 ] && set -- .
 
@@ -90,7 +90,7 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
-[ $SAVE_SINGLE_SPEC -gt 0 ] && find "$PKGSDIR" -iname '*.spec' -exec rm -f {} +
+[ $SAVE_SINGLE_SPEC -gt 0 ] && find "$PKGSDIR" -iname '*.spec' -exec rm -f -- {} +
 
 cp -at "$PKGSDIR" "$SPEC"
 
@@ -101,9 +101,9 @@ fi
 
 SRPM=$( \
 	cd "$SOURCEDIR" \
-	&& tar -czf "$PKGNAME-$VERSION.tar.gz" "$PKGNAME-$VERSION" \
+	&& tar -czf "$PKGNAME-$VERSION.tar.gz" -- "$PKGNAME-$VERSION" \
 	&& rpmbuild -ts "$PKGNAME-$VERSION.tar.gz" ${DIST:+"$DIST"} | sed 's/^[^ ]* *//' \
-	&& rm -rf "$PKGNAME-$VERSION/" \
+	&& rm -rf -- "$PKGNAME-$VERSION/" \
 )
 
 echo "$SRPM"
