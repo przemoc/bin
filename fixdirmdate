@@ -12,9 +12,9 @@ while [ $# -gt 0 ]; do
 	DIR="$1"
 	shift
 	(
-		cd "$DIR"
-		find -L . -mindepth 1 -maxdepth 1 -type d \
-		     -exec "$0" {} +
+		cd "$DIR" \
+		&& find -L . -mindepth 1 -maxdepth 1 -type d \
+		        -exec "$0" {} +
 	)
 	DATE=$(find -L "$DIR" -mindepth 1 -maxdepth 1 \
 	            -exec stat -c '%y' {} + \
