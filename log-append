@@ -1,0 +1,18 @@
+#/bin/sh
+
+## Update log file.
+## Author: Przemyslaw Pawelczyk
+
+[ -z "$UID" ]  && UID=0
+[ -z "$HOME" ] && HOME=$(awk -F: '$3=="'"$UID"'"{print$6;exit;}' /etc/passwd)
+
+if [ "$LOGDATE" = "boot" ]; then
+	BOOT_SECS="${BOOT_SECS:-0}"
+	UPTIME_SECS="$(sed 's, .*,,' /proc/uptime)"
+	LOGDATE="now - $UPTIME_SECS secs - $BOOT_SECS secs"
+fi
+
+LOGDATE="${LOGDATE:-now}"
+LOGFILE="${LOGFILE:-$HOME/.log}"
+
+echo "$(date -d "$LOGDATE" +"%FT%T%z") $@" >>"$LOGFILE"
