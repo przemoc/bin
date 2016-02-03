@@ -1,0 +1,49 @@
+#!/bin/sh
+
+## git config changer.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 <local|proxy> <on|off>"
+	exit 0
+fi
+
+GIT_CONFIG_GLOBAL="$HOME/.gitconfig"
+
+if [ ! -e "$GIT_CONFIG_GLOBAL" -a -e "$XDG_CONFIG_HOME/git/config" ]; then
+	GIT_CONFIG_GLOBAL="$XDG_CONFIG_HOME/git/config"
+fi
+
+GIT_CONFIG_LOCAL="$(git config --global --path include.path)"
+
+WHAT="$1"
+shift
+
+ACT="$1"
+
+case "$ACT" in
+	on|enable|1)
+		ACT=1
+		;;
+	off|disable|0)
+		ACT=0
+		;;
+	*)
+		ACT=-1
+esac
+
+case "$WHAT" in
+	local)
+		 [ $ACT -eq 0 ] && sed -i '/\[include\]/,/\[/{/path/s,^,#,;}'  "$GIT_CONFIG_GLOBAL"
+		 [ $ACT -eq 1 ] && sed -i '/\[include\]/,/\[/{/path/s,^#*,,;}' "$GIT_CONFIG_GLOBAL"
+		;;
+	proxy)
+		 [ $ACT -eq 0 ] && sed -i '/\[http\]/,/\[/{/proxy/s,^,#,;}'    "$GIT_CONFIG_LOCAL"
+		 [ $ACT -eq 1 ] && sed -i '/\[http\]/,/\[/{/proxy/s,^#*,,;}'   "$GIT_CONFIG_LOCAL"
+		;;
+	*)
+		echo "Wrong argument!" >&2
+		exit 1
+esac
+
+exit 0
