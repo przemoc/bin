@@ -1,16 +1,27 @@
 #!/bin/sh
 
-## Show earliest and latest entry for given day.
+## Show entries for given day.
 ## Author: Przemyslaw Pawelczyk
 
-LOGFILE="$HOME/.screenlock"
+LOGFILE="$HOME/.log"
 
 if [ $# -eq 0 ]; then
-	echo "Usage: $0 DATE..."
+	echo "Usage: $0 [-a] DATE..."
 	exit 0
 fi
 
-while [ $# -gt 0 ]; do
-	grep $1 "$LOGFILE" | sed '$!{1!d}'
+TRANSFORM="sed \$!{1!d}"
+if [ "$1" = "-a" ]; then
+	TRANSFORM=cat
 	shift
+fi
+
+NOW="$(date +"%FT%T%z NOW")"
+
+while [ $# -gt 0 ]; do
+	PATT="$1"
+	shift
+	[ "$PATT" = "today" ] && PATT="$(date +%F)"
+	grep "$PATT" "$LOGFILE" | sort | $TRANSFORM
+	echo "$NOW" | grep "$PATT"
 done
