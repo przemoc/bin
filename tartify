@@ -1,0 +1,25 @@
+#!/bin/sh
+
+## Tartify tarball, i.e. store `tar -t -vf FILE` in .txt file.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 TAR..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	echo "$FILE"
+	FILENAME="$FILE"
+	case "$FILE" in
+		*.tbz2|*.tbz|*.tgz|*.txz)
+			FILENAME="${FILENAME%.*}.tar."
+			;;
+	esac
+	tar -vtf "$FILE" >"${FILENAME%.*}.txt"
+	touch -r "$FILE" "${FILENAME%.*}.txt"
+done
+
+exit 0
