@@ -1,0 +1,47 @@
+#!/bin/sh
+
+## Xzify uncompressed data.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 FILE..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	echo "$FILE"
+	FILENAME="$FILE"
+	COMMAND=
+	case "$FILE" in
+		*.tbz2|*.tbz)
+			FILENAME="${FILENAME%.*}.tar"
+			COMMAND=bzip2
+			;;
+		*.bz2)
+			FILENAME="${FILENAME%.*}"
+			COMMAND=bzip2
+			;;
+		*.tgz)
+			FILENAME="${FILENAME%.*}.tar"
+			COMMAND=gzip
+			;;
+		*.gz)
+			FILENAME="${FILENAME%.*}"
+			COMMAND=gzip
+			;;
+		*.txz|*.xz)
+			echo "$0: $FILE is possibly already XZ" >&2
+			continue
+			;;
+	esac
+	if [ -z "$COMMAND" ]; then
+		xz -k "$FILE"
+	else
+		$COMMAND -dc "$FILE" | xz -fc - >"$FILENAME.xz"
+	fi
+	touch -r "$FILE" "$FILENAME.xz"
+done
+
+exit 0
