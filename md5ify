@@ -1,0 +1,52 @@
+#!/bin/sh
+
+## Compute MD5 message digest of uncompressed data.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 FILE..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	FILE="$1"
+	shift
+	echo "$FILE"
+	FILENAME="$FILE"
+	COMMAND=
+	case "$FILE" in
+		*.tbz2|*.tbz)
+			FILENAME="${FILENAME%.*}.tar"
+			COMMAND=bzip2
+			;;
+		*.bz2)
+			FILENAME="${FILENAME%.*}"
+			COMMAND=bzip2
+			;;
+		*.tgz)
+			FILENAME="${FILENAME%.*}.tar"
+			COMMAND=gzip
+			;;
+		*.gz)
+			FILENAME="${FILENAME%.*}"
+			COMMAND=gzip
+			;;
+		*.txz)
+			FILENAME="${FILENAME%.*}.tar"
+			COMMAND=xz
+			;;
+		*.xz)
+			FILENAME="${FILENAME%.*}"
+			COMMAND=xz
+			;;
+	esac
+	if [ -z "$COMMAND" ]; then
+		MD5SUM="$(md5sum "$FILE" | sed 's,[ \t].*,,')"
+	else
+		MD5SUM="$($COMMAND -dc "$FILE" | md5sum - | sed 's,[ \t].*,,')"
+	fi
+	echo "$MD5SUM  ${FILENAME##*/}" >"$FILENAME.md5"
+	touch -r "$FILE" "$FILENAME.md5"
+done
+
+exit 0
