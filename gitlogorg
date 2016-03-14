@@ -1,0 +1,55 @@
+#!/bin/sh
+
+## git log --oneline --reverse w/ grep for sha1 (in given branches)
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 -o "$1" = "-h" ]; then
+	echo "Usage: $0 [--showtags] [--showbtags] [--branch BRANCH]... [REV_RANGE [[--] PATH...]]"
+	exit 0
+fi
+
+SHOWTAGS=
+SHOWBTAGS=
+BRANCHES=
+
+if [ "$1" = "--showtags" ]; then
+	SHOWTAGS=1
+	shift
+fi
+
+if [ "$1" = "--showbtags" ]; then
+	SHOWBTAGS=1
+	shift
+fi
+
+while [ "$1" = "--branch" ]; do
+	BRANCHES="$BRANCHES $2"
+	shift 2
+done
+
+COMMITS="$(\
+	git log --oneline --reverse "$@" \
+)"
+
+echo "$COMMITS" | while read -r SHA1 MESG; do
+	TAG=
+	[ -n "$SHOWTAGS" ] \
+		&& TAG="$(git tag --sort=v:refname --contains $SHA1 | sed 1q)"
+	printf "%s %s" "$SHA1" "$MESG"
+	[ -n "$TAG" ] && printf " (%s)" "$TAG"
+	printf "\n"
+	for BRANCH in $BRANCHES; do
+		BCOMMITS="$(\
+			git log --oneline --reverse --grep=$SHA1 $SHA1..$BRANCH \
+		)"
+		[ -z "$BCOMMITS" ] && continue
+		echo "  $BRANCH:"
+		echo "$BCOMMITS" | while read -r BSHA1 BMESG; do
+			[ -n "$SHOWBTAGS" ] \
+				&& BTAG="$(git tag --sort=v:refname --contains $BSHA1 | sed 1q)"
+			printf "    %s %s" "$BSHA1" "$BMESG"
+			[ -n "$BTAG" ] && printf " (%s)" "$BTAG"
+			printf "\n"
+		done
+	done
+done
