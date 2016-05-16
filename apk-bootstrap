@@ -1,0 +1,41 @@
+#!/bin/sh
+
+## Very simplistic Alpine Linux "bootstrapping" using apk w/o chroot.
+##
+## It creates minimal environment for apk and adds requested packages.
+## Installation scripts may fail.  You may want to run it in fakeroot.
+## YOU DON'T WANT TO RUN IT AS ROOT.  DON'T EVEN THINK ABOUT IT!
+##
+## Author: Przemyslaw Pawelczyk
+
+AL_VERS=${AL_VERS:-v3.3}
+AL_ARCH=${AL_ARCH:-$(cat /etc/apk/arch 2>/dev/null)}
+AL_ROOT=${AL_ROOT:-.}
+AL_APKADDOPTS=${AL_APKADDOPTS:-}
+
+DIRS="\
+etc/apk
+lib/apk/db
+var/cache/apk
+"
+FILES="\
+etc/apk/world
+"
+REPOS="\
+http://dl-cdn.alpinelinux.org/alpine/$AL_VERS/main
+http://dl-cdn.alpinelinux.org/alpine/$AL_VERS/community
+"
+REPOFILE=etc/apk/repositories
+
+cd "$AL_ROOT" || exit 1
+
+mkdir -p ${DIRS}
+touch ${FILES}
+printf "%s" "$REPOS" >"$REPOFILE"
+
+apk update --allow-untrusted -p . ${AL_ARCH:+--arch "$AL_ARCH"}
+apk add    --allow-untrusted -p . alpine-keys
+
+if [ $# -gt 0 ]; then
+	apk add ${AL_APKADDOPTS} -p . "$@"
+fi
