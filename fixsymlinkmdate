@@ -1,0 +1,17 @@
+#!/bin/sh
+
+## Fix symbolic link modification date.
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 SYMLINK..."
+	exit 0
+fi
+
+while [ $# -gt 0 ]; do
+	DATE=$(stat -L -c '%y' "$1" 2>/dev/null)
+	[ -z "$DATE" ] || touch -h -d "$DATE" "$1"
+	shift
+done
+
+exit 0
