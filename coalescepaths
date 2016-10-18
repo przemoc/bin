@@ -1,0 +1,26 @@
+#!/bin/sh
+
+## Coalesce paths.
+## (Needs already sorted input.)
+## Author: Przemyslaw Pawelczyk
+
+awk -- '
+BEGIN { p = ""; l = 0; }
+{
+	l = length(p);
+	if (l \
+	    && substr($0, 1, l) == p \
+	    && substr($0, l+1, 1) == "/" \
+	   )
+		;
+	else {
+		p = $0;
+		l = length(p);
+		if (substr(p, l, 1) == "/") {
+			l -= 1;
+			p = substr(p, 1, l);
+		}
+		print p;
+	}
+}
+' "$@"
