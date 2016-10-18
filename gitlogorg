@@ -28,7 +28,7 @@ while [ "$1" = "--branch" ]; do
 done
 
 COMMITS="$(\
-	git log --oneline --reverse "$@" \
+	git -c core.abbrev=7 log --oneline --reverse "$@" \
 )"
 
 echo "$COMMITS" | while read -r SHA1 MESG; do
@@ -40,7 +40,7 @@ echo "$COMMITS" | while read -r SHA1 MESG; do
 	printf "\n"
 	for BRANCH in $BRANCHES; do
 		BCOMMITS="$(\
-			git log --oneline --reverse --grep=$SHA1 $SHA1..$BRANCH \
+			git -c core.abbrev=7 log --oneline --reverse --grep='\<'$SHA1 $SHA1..$BRANCH \
 		)"
 		[ -z "$BCOMMITS" ] && continue
 		echo "  $BRANCH:"
