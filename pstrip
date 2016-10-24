@@ -9,8 +9,34 @@ if [ $# -eq 0 ]; then
 	exit 0
 fi
 
+STRIP_DEBUG=
+STRIP_UNNEEDED=
+OPTS=
+while [ "${1#-}" != "$1" ]; do
+	OPT=$1
+	shift
+	case "$OPT" in
+		--) break ;;
+		-g|-d|-S|--strip-debug) STRIP_DEBUG=1 ;;
+		-u|--strip-unneeded) STRIP_UNNEEDED=1 ;;
+		*) OPTS="$OPTS $OPT" ;;
+	esac
+done
+
+if [ -n "$OPTS" ]; then
+	echo "$0: Warning: Unknown options: $OPTS!" >&2
+fi
+
+STRIP_DEBUG_OPT=-g
+STRIP_UNNEEDED_OPT=--strip-unneeded
+
 # comment below line if you don't want to use elfutils's strip
 STRIP_PREFIX=eu-
+if [ -z "$CROSS_COMPILE" ] && [ -n "$STRIP_UNNEEDED" ]; then
+	echo "$0: Removing only symbols not needed for relocation processing is not supported by elfutils's strip!" >&2
+	exit 1
+fi
+
 [ -n "$CROSS_COMPILE" ] && STRIP_PREFIX=$CROSS_COMPILE
 
 while [ $# -gt 0 ]; do
@@ -19,6 +45,9 @@ while [ $# -gt 0 ]; do
 	[ -h "$FILE" ] && FILE="$(readlink "$FILE")"
 	[ -z "$FILE" ] && continue
 	DATE="$(stat -c '%y' "$FILE")"
-	${STRIP_PREFIX}strip "$FILE"
+	${STRIP_PREFIX}strip \
+		${STRIP_DEBUG+$STRIP_DEBUG_OPT} \
+		${STRIP_UNNEEDED+$STRIP_UNNEEDED_OPT} \
+		-- "$FILE"
 	touch -d "$DATE" "$FILE"
 done
