@@ -1,0 +1,21 @@
+#!/bin/sh
+
+## Execute command from given directory.
+## Author: Przemyslaw Pawelczyk
+
+set -e
+
+if [ $# -eq 0 ]; then
+	echo "Usage: $0 [-n] [-p] DIR CMD..."
+	exit 0
+fi
+
+P=
+N=
+[ "$1" != "-n" ] || { N=1; shift; }
+[ "$1" != "-p" ] || { P=1; shift; }
+cd "$1"
+shift
+[ -z "$N" ] || echo
+[ -z "$P" ] || pwd
+exec "$@"
