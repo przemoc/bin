@@ -1,0 +1,25 @@
+#!/bin/sh
+
+## Returns size of type
+## Author: Przemyslaw Pawelczyk
+
+if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+	echo "Usage: $0 [-i INCLUDE]... TYPE"
+	exit 0
+fi
+
+INCLUDES=
+while [ $# -gt 0 ]; do
+	[ "$1" = "-i" ] || break
+	shift
+	INCLUDES="$INCLUDES\
+#include $1
+"
+	shift
+done
+
+echo "${INCLUDES}int size = sizeof($*);" \
+	| ${CROSS_COMPILE}${CC:-gcc} ${CFLAGS} ${CPPFLAGS} ${TARGET_ARCH} -x c -S -o - - \
+	| sed '/^size:/!d;n' \
+	| sed '/^\t\.long\t/!d;s,,,;s,[ \t].*,,' \
+
