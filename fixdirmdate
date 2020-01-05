@@ -18,7 +18,7 @@ while [ $# -gt 0 ]; do
 	)
 	DATE=$(find -L "$DIR" -mindepth 1 -maxdepth 1 \
 	            -exec stat -c '%y' {} + \
-	            | sort -r | sed 1q)
+	            | sort -r | sed 's,\.[0-9]*$,,;1q')
 	[ -z "$DATE" ] && continue
 	touch -d "$DATE" "$DIR"
 	[ -h "$DIR" ] && touch -h -d "$DATE" "$DIR"
