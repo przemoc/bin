@@ -1,0 +1,6 @@
+#!/bin/sh
+
+## Print contents of pane, joining wrapped lines w/o preserving trailing spaces
+## Author: Przemyslaw Pawelczyk
+
+tmux capture-pane -pJ -S - -E - "$@" | sed 's, *$,,'
